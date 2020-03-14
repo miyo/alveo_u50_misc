@@ -1,6 +1,7 @@
 set project_dir    "./cmac_usplus_0_ex"
 set project_name   "cmac_usplus_0_ex"
 set project_target "xcu50-fsvh2104-2-e"
+set project_board "xilinx.com:au50:part0:1.0"
 set source_files { \
 			./sources/cmac_usplus_0_axi4_lite_user_if.v \
 			./sources/cmac_usplus_0_exdes.v \
@@ -18,6 +19,7 @@ set simulation_files { \
 		       }
 
 create_project -force $project_name $project_dir -part $project_target
+set_property BOARD_PART $project_board [current_project] 
 add_files -norecurse $source_files
 add_files -fileset constrs_1 -norecurse $constraint_files
 
