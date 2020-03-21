@@ -1,5 +1,3 @@
- 
- 
 ////------------------------------------------------------------------------------
 ////  (c) Copyright 2013 Xilinx, Inc. All rights reserved.
 ////
@@ -57,87 +55,93 @@ module cmac_usplus_0_lbus_pkt_gen
     parameter PKT_SIZE     = 522      //// Min pkt size 64 Bytes; Max pkt size 16000 Bytes
    )
    (
-    input  wire            clk,
-    input  wire            reset,
-    input  wire            sys_reset,
+    input wire 		 clk,
+    input wire 		 reset,
+    input wire 		 sys_reset,
 
-    input  wire            send_continuous_pkts,
-    input  wire            stat_rx_aligned,
-    input  wire            lbus_tx_rx_restart_in,
-    input  wire            sanity_init_done,
-    input  wire            pause_init_done,
-    output wire            ctl_tx_send_idle,
-    output wire            ctl_tx_send_lfi,
-    output wire            ctl_tx_send_rfi,
-    output wire            tx_reset,                                       //// Used to Reset the CMAC TX Core
-    input  wire [3 :0]     gt_rxrecclkout,
-    output reg             tx_done_led,
-    output reg             tx_busy_led,
-    input  wire            stat_tx_pause,
-    input  wire [8:0]      stat_tx_pause_valid,
-    input  wire            stat_tx_user_pause,
-    output wire [8:0]      ctl_tx_pause_req,
-    output wire            ctl_tx_resend_pause,
-    input  wire            stat_tx_bad_fcs,
-    input  wire            stat_tx_broadcast,
-    input  wire            stat_tx_frame_error,
-    input  wire            stat_tx_local_fault,
-    input  wire            stat_tx_multicast,
-    input  wire            stat_tx_packet_1024_1518_bytes,
-    input  wire            stat_tx_packet_128_255_bytes,
-    input  wire            stat_tx_packet_1519_1522_bytes,
-    input  wire            stat_tx_packet_1523_1548_bytes,
-    input  wire            stat_tx_packet_1549_2047_bytes,
-    input  wire            stat_tx_packet_2048_4095_bytes,
-    input  wire            stat_tx_packet_256_511_bytes,
-    input  wire            stat_tx_packet_4096_8191_bytes,
-    input  wire            stat_tx_packet_512_1023_bytes,
-    input  wire            stat_tx_packet_64_bytes,
-    input  wire            stat_tx_packet_65_127_bytes,
-    input  wire            stat_tx_packet_8192_9215_bytes,
-    input  wire            stat_tx_packet_large,
-    input  wire            stat_tx_packet_small,
-    input  wire [5:0]      stat_tx_total_bytes,
-    input  wire [13:0]     stat_tx_total_good_bytes,
-    input  wire            stat_tx_total_good_packets,
-    input  wire            stat_tx_total_packets,
-    input  wire            stat_tx_unicast,
-    input  wire            stat_tx_vlan,
+    input wire 		 send_continuous_pkts,
+    input wire 		 stat_rx_aligned,
+    input wire 		 lbus_tx_rx_restart_in,
+    input wire 		 sanity_init_done,
+    input wire 		 pause_init_done,
+    output wire 	 ctl_tx_send_idle,
+    output wire 	 ctl_tx_send_lfi,
+    output wire 	 ctl_tx_send_rfi,
+    output wire 	 tx_reset, //// Used to Reset the CMAC TX Core
+    input wire [3 :0] 	 gt_rxrecclkout,
+    output reg 		 tx_done_led,
+    output reg 		 tx_busy_led,
+    input wire 		 stat_tx_pause,
+    input wire [8:0] 	 stat_tx_pause_valid,
+    input wire 		 stat_tx_user_pause,
+    output wire [8:0] 	 ctl_tx_pause_req,
+    output wire 	 ctl_tx_resend_pause,
+    input wire 		 stat_tx_bad_fcs,
+    input wire 		 stat_tx_broadcast,
+    input wire 		 stat_tx_frame_error,
+    input wire 		 stat_tx_local_fault,
+    input wire 		 stat_tx_multicast,
+    input wire 		 stat_tx_packet_1024_1518_bytes,
+    input wire 		 stat_tx_packet_128_255_bytes,
+    input wire 		 stat_tx_packet_1519_1522_bytes,
+    input wire 		 stat_tx_packet_1523_1548_bytes,
+    input wire 		 stat_tx_packet_1549_2047_bytes,
+    input wire 		 stat_tx_packet_2048_4095_bytes,
+    input wire 		 stat_tx_packet_256_511_bytes,
+    input wire 		 stat_tx_packet_4096_8191_bytes,
+    input wire 		 stat_tx_packet_512_1023_bytes,
+    input wire 		 stat_tx_packet_64_bytes,
+    input wire 		 stat_tx_packet_65_127_bytes,
+    input wire 		 stat_tx_packet_8192_9215_bytes,
+    input wire 		 stat_tx_packet_large,
+    input wire 		 stat_tx_packet_small,
+    input wire [5:0] 	 stat_tx_total_bytes,
+    input wire [13:0] 	 stat_tx_total_good_bytes,
+    input wire 		 stat_tx_total_good_packets,
+    input wire 		 stat_tx_total_packets,
+    input wire 		 stat_tx_unicast,
+    input wire 		 stat_tx_vlan,
 
-    output wire [55:0]     tx_preamblein,
-    input  wire            tx_rdyout,
-    output reg  [128-1:0]  tx_datain0,
-    output reg             tx_enain0,
-    output reg             tx_sopin0,
-    output reg             tx_eopin0,
-    output reg             tx_errin0,
-    output reg  [4-1:0]    tx_mtyin0,
-    output reg  [128-1:0]  tx_datain1,
-    output reg             tx_enain1,
-    output reg             tx_sopin1,
-    output reg             tx_eopin1,
-    output reg             tx_errin1,
-    output reg  [4-1:0]    tx_mtyin1,
-    output reg  [128-1:0]  tx_datain2,
-    output reg             tx_enain2,
-    output reg             tx_sopin2,
-    output reg             tx_eopin2,
-    output reg             tx_errin2,
-    output reg  [4-1:0]    tx_mtyin2,
-    output reg  [128-1:0]  tx_datain3,
-    output reg             tx_enain3,
-    output reg             tx_sopin3,
-    output reg             tx_eopin3,
-    output reg             tx_errin3,
-    output reg  [4-1:0]    tx_mtyin3,
+    output wire [55:0] 	 tx_preamblein,
+    input wire 		 tx_rdyout,
+    output reg [128-1:0] tx_datain0,
+    output reg 		 tx_enain0,
+    output reg 		 tx_sopin0,
+    output reg 		 tx_eopin0,
+    output reg 		 tx_errin0,
+    output reg [4-1:0] 	 tx_mtyin0,
+    output reg [128-1:0] tx_datain1,
+    output reg 		 tx_enain1,
+    output reg 		 tx_sopin1,
+    output reg 		 tx_eopin1,
+    output reg 		 tx_errin1,
+    output reg [4-1:0] 	 tx_mtyin1,
+    output reg [128-1:0] tx_datain2,
+    output reg 		 tx_enain2,
+    output reg 		 tx_sopin2,
+    output reg 		 tx_eopin2,
+    output reg 		 tx_errin2,
+    output reg [4-1:0] 	 tx_mtyin2,
+    output reg [128-1:0] tx_datain3,
+    output reg 		 tx_enain3,
+    output reg 		 tx_sopin3,
+    output reg 		 tx_eopin3,
+    output reg 		 tx_errin3,
+    output reg [4-1:0] 	 tx_mtyin3,
                            
-    input  wire            tx_ovfout,
-    input  wire            tx_unfout
+    input wire 		 tx_ovfout,
+    input wire 		 tx_unfout,
 
+    output wire 	 payload_rd,
+    input wire [511:0] 	 payload,
+    input wire [15:0] 	 lbus_number_pkt_proc,
+    input wire [13:0] 	 lbus_pkt_size_proc,
+    output wire [7:0] 	 debug
     );
 
     //// Parameters Decleration
-    localparam TX_FLOW_CONTROL           = 1;
+    //localparam TX_FLOW_CONTROL           = 1;
+    localparam TX_FLOW_CONTROL           = 0;
 
     //// pkt_gen States
     localparam STATE_TX_IDLE             = 0;
@@ -154,9 +158,9 @@ module cmac_usplus_0_lbus_pkt_gen
 
     ////State Registers for TX
     reg  [3:0]     tx_prestate;
+   assign debug = tx_prestate;
 
-    reg  [15:0]    number_pkt_tx, lbus_number_pkt_proc;
-    reg  [13:0]    lbus_pkt_size_proc;
+    reg [15:0] 	   number_pkt_tx;
     reg  [13:0]    pending_pkt_size;
     reg  [13:0]    pending_pkt_16size, pending_pkt_32size, pending_pkt_48size, pending_pkt_64size;
     reg            tx_restart_rise_edge, first_pkt, pkt_size_64, tx_fsm_en, tx_halt, wait_to_restart;
@@ -170,8 +174,8 @@ module cmac_usplus_0_lbus_pkt_gen
     reg            nxt_enain2, nxt_sopin2, nxt_eopin2, nxt_errin2;
     reg            nxt_enain3, nxt_sopin3, nxt_eopin3, nxt_errin3;
     reg  [ 4-1:0]  nxt_mtyin0, nxt_mtyin1, nxt_mtyin2, nxt_mtyin3;
-    reg  [ 7:0]    tx_payload_1, tx_payload_2, tx_payload_new;
-    reg  [128-1:0] payload_16byte,payload_16byte_new;
+    //reg  [ 7:0]    tx_payload_1, tx_payload_2, tx_payload_new;
+    //reg  [128-1:0] payload_16byte,payload_16byte_new;
     reg  [128-1:0] nxt_datain0, nxt_datain1, nxt_datain2, nxt_datain3;
 
     reg            stat_rx_aligned_1d, reset_done;
@@ -284,19 +288,19 @@ module cmac_usplus_0_lbus_pkt_gen
             nxt_datain1                       <= 128'd0;
             nxt_datain2                       <= 128'd0;
             nxt_datain3                       <= 128'd0;
-            payload_16byte                    <= 128'd0;
-            payload_16byte_new                <= 128'd0;
+            //payload_16byte                    <= 128'd0;
+            //payload_16byte_new                <= 128'd0;
             pending_pkt_size                  <= 16'd0;
             tx_done_reg                       <= 1'b0;
             tx_done_tmp                       <= 1'b0;
             tx_done_reg_d                     <= 1'b0;
             tx_fsm_en                         <= 1'b0;
-            tx_payload_1                      <= 8'd0;
-            tx_payload_2                      <= 8'd0;
-            tx_payload_new                    <= 8'd0;
+            //tx_payload_1                      <= 8'd0;
+            //tx_payload_2                      <= 8'd0;
+            //tx_payload_new                    <= 8'd0;
             number_pkt_tx                     <= 16'd0;
-            lbus_number_pkt_proc              <= 16'd0;
-            lbus_pkt_size_proc                <= 14'd0;
+            //lbus_number_pkt_proc              <= 16'd0;
+            //lbus_pkt_size_proc                <= 14'd0;
             segment0_eop                      <= 1'b0;
             segment1_eop                      <= 1'b0;
             segment2_eop                      <= 1'b0;
@@ -330,9 +334,9 @@ module cmac_usplus_0_lbus_pkt_gen
                                          ctl_tx_send_lfi_r      <= 1'b0;
                                          ctl_tx_send_rfi_r      <= 1'b0;
                                          ctl_tx_test_pattern_r  <= 1'b0;
-                                         lbus_pkt_size_proc     <= 14'd0;
+                                         //lbus_pkt_size_proc     <= 14'd0;
                                          number_pkt_tx          <= 16'd0;
-                                         lbus_number_pkt_proc   <= 16'd0;
+                                         //lbus_number_pkt_proc   <= 16'd0;
                                          init_done              <= 1'b0;
                                          gt_lock_led            <= 1'b0;
                                          rx_aligned_led         <= 1'b0;
@@ -363,8 +367,8 @@ module cmac_usplus_0_lbus_pkt_gen
                                          nxt_datain1            <= 128'd0;
                                          nxt_datain2            <= 128'd0;
                                          nxt_datain3            <= 128'd0;
-                                         payload_16byte         <= 128'd0;
-                                         payload_16byte_new     <= 128'd0;
+                                         //payload_16byte         <= 128'd0;
+                                         //payload_16byte_new     <= 128'd0;
                                          tx_fsm_en              <= 1'b0;
                                          segment0_eop           <= 1'b0;
                                          segment1_eop           <= 1'b0;
@@ -429,8 +433,8 @@ module cmac_usplus_0_lbus_pkt_gen
                                          ctl_tx_enable_r        <= 1'b1;
                                          tx_fsm_en              <= 1'b0;
                                          number_pkt_tx          <= 16'd0;
-                                         lbus_number_pkt_proc   <= PKT_NUM - 16'd1;
-                                         lbus_pkt_size_proc     <= PKT_SIZE;
+                                         //lbus_number_pkt_proc   <= PKT_NUM - 16'd1;
+                                         //lbus_pkt_size_proc     <= PKT_SIZE;
                                          segment0_eop           <= 1'b0;
                                          segment1_eop           <= 1'b0;
                                          segment2_eop           <= 1'b0;
@@ -438,17 +442,17 @@ module cmac_usplus_0_lbus_pkt_gen
                                          tx_done_reg            <= 1'd0;
                                          tx_done_tmp            <= 1'd0;
                                          tx_done_reg_d          <= 1'b0;
-                                         tx_payload_1           <= 8'd6;
-                                         tx_payload_2           <= tx_payload_1 + 8'd1;
-                                         tx_payload_new         <= tx_payload_1 + 8'd2;
-                                         payload_16byte         <= {tx_payload_1, tx_payload_1, tx_payload_1, tx_payload_1,
-                                                                    tx_payload_1, tx_payload_1, tx_payload_1, tx_payload_1,
-                                                                    tx_payload_1, tx_payload_1, tx_payload_1, tx_payload_1,
-                                                                    tx_payload_1, tx_payload_1, tx_payload_1, tx_payload_1 };                                         
-                                         payload_16byte_new     <= {tx_payload_2, tx_payload_2, tx_payload_2, tx_payload_2,
-                                                                    tx_payload_2, tx_payload_2, tx_payload_2, tx_payload_2,
-                                                                    tx_payload_2, tx_payload_2, tx_payload_2, tx_payload_2,
-                                                                    tx_payload_2, tx_payload_2, tx_payload_2, tx_payload_2 };
+                                         //tx_payload_1           <= 8'd6;
+                                         //tx_payload_2           <= tx_payload_1 + 8'd1;
+                                         //tx_payload_new         <= tx_payload_1 + 8'd2;
+                                         //payload_16byte         <= {tx_payload_1, tx_payload_1, tx_payload_1, tx_payload_1,
+                                         //                           tx_payload_1, tx_payload_1, tx_payload_1, tx_payload_1,
+                                         //                           tx_payload_1, tx_payload_1, tx_payload_1, tx_payload_1,
+                                         //                           tx_payload_1, tx_payload_1, tx_payload_1, tx_payload_1 };
+                                         //payload_16byte_new     <= {tx_payload_2, tx_payload_2, tx_payload_2, tx_payload_2,
+                                         //                           tx_payload_2, tx_payload_2, tx_payload_2, tx_payload_2,
+                                         //                           tx_payload_2, tx_payload_2, tx_payload_2, tx_payload_2,
+                                         //                           tx_payload_2, tx_payload_2, tx_payload_2, tx_payload_2 };
                                          pending_pkt_size       <= lbus_pkt_size_proc;
 
                                          if (lbus_pkt_size_proc == 14'd64)
@@ -487,24 +491,24 @@ module cmac_usplus_0_lbus_pkt_gen
                                          tx_halt         <= 1'b0;
                                          if (pending_pkt_size <= 14'd64 || pkt_size_64 == 1'b1)
                                          begin
-                                             payload_16byte   <= payload_16byte_new;
-
-                                             if ( tx_payload_new == 8'd255)
-                                             begin
-                                                 tx_payload_new      <= 8'd6;
-                                                 payload_16byte_new  <= {tx_payload_1, tx_payload_1, tx_payload_1, tx_payload_1,
-                                                                         tx_payload_1, tx_payload_1, tx_payload_1, tx_payload_1,
-                                                                         tx_payload_1, tx_payload_1, tx_payload_1, tx_payload_1,
-                                                                         tx_payload_1, tx_payload_1, tx_payload_1, tx_payload_1 };                                         
-                                             end
-                                             else
-                                             begin
-                                                 tx_payload_new      <=  tx_payload_new + 8'd1;
-                                                 payload_16byte_new  <= {tx_payload_new, tx_payload_new, tx_payload_new, tx_payload_new,
-                                                                         tx_payload_new, tx_payload_new, tx_payload_new, tx_payload_new,
-                                                                         tx_payload_new, tx_payload_new, tx_payload_new, tx_payload_new,
-                                                                         tx_payload_new, tx_payload_new, tx_payload_new, tx_payload_new };
-                                             end
+                                             //payload_16byte   <= payload_16byte_new;
+                                             //
+                                             //if ( tx_payload_new == 8'd255)
+                                             //begin
+                                             //    tx_payload_new      <= 8'd6;
+                                             //    payload_16byte_new  <= {tx_payload_1, tx_payload_1, tx_payload_1, tx_payload_1,
+                                             //                            tx_payload_1, tx_payload_1, tx_payload_1, tx_payload_1,
+                                             //                            tx_payload_1, tx_payload_1, tx_payload_1, tx_payload_1,
+                                             //                            tx_payload_1, tx_payload_1, tx_payload_1, tx_payload_1 };
+                                             //end
+                                             //else
+                                             //begin
+                                             //    tx_payload_new      <=  tx_payload_new + 8'd1;
+                                             //    payload_16byte_new  <= {tx_payload_new, tx_payload_new, tx_payload_new, tx_payload_new,
+                                             //                            tx_payload_new, tx_payload_new, tx_payload_new, tx_payload_new,
+                                             //                            tx_payload_new, tx_payload_new, tx_payload_new, tx_payload_new,
+                                             //                            tx_payload_new, tx_payload_new, tx_payload_new, tx_payload_new };
+                                             //end
 
                                          end
                                          
@@ -530,25 +534,25 @@ module cmac_usplus_0_lbus_pkt_gen
                                              nxt_sopin0     <= 1'b1;
                                              nxt_enain0     <= 1'b1;
                                              nxt_eopin0     <= 1'b0;
-                                             nxt_datain0    <= payload_16byte;
+                                             nxt_datain0    <= payload[511:384];
                                              nxt_mtyin0     <= 4'd0;
 
                                              nxt_sopin1     <= 1'b0;
                                              nxt_enain1     <= 1'b1;
                                              nxt_eopin1     <= 1'b0;
-                                             nxt_datain1    <= payload_16byte;
+                                             nxt_datain1    <= payload[383:256];
                                              nxt_mtyin1     <= 4'd0;
 
                                              nxt_sopin2     <= 1'b0;
                                              nxt_enain2     <= 1'b1;
                                              nxt_eopin2     <= 1'b0;
-                                             nxt_datain2    <= payload_16byte;
+                                             nxt_datain2    <= payload[255:128];
                                              nxt_mtyin2     <= 4'd0;
 
                                              nxt_sopin3     <= 1'b0;
                                              nxt_enain3     <= 1'b1;
                                              nxt_eopin3     <= 1'b1;
-                                             nxt_datain3    <= payload_16byte;
+                                             nxt_datain3    <= payload[127:0];
                                              nxt_mtyin3     <= 4'd0;
                                              number_pkt_tx  <= number_pkt_tx + 16'd1;
                                              tx_done_reg    <= tx_done_tmp & ~send_continuous_pkts_3d;
@@ -561,25 +565,25 @@ module cmac_usplus_0_lbus_pkt_gen
                                              nxt_sopin0       <= 1'b1;
                                              nxt_enain0       <= 1'b1;
                                              nxt_eopin0       <= 1'b0;
-                                             nxt_datain0      <= payload_16byte;
+                                             nxt_datain0      <= payload[511:384];
                                              nxt_mtyin0       <= 4'd0;
 
                                              nxt_sopin1       <= 1'b0;
                                              nxt_enain1       <= 1'b1;
                                              nxt_eopin1       <= 1'b0;
-                                             nxt_datain1      <= payload_16byte;
+                                             nxt_datain1      <= payload[383:256];
                                              nxt_mtyin1       <= 4'd0;
 
                                              nxt_sopin2       <= 1'b0;
                                              nxt_enain2       <= 1'b1;
                                              nxt_eopin2       <= 1'b0;
-                                             nxt_datain2      <= payload_16byte;
+                                             nxt_datain2      <= payload[255:128];
                                              nxt_mtyin2       <= 4'd0;
 
                                              nxt_sopin3       <= 1'b0;
                                              nxt_enain3       <= 1'b1;
                                              nxt_eopin3       <= 1'b0;
-                                             nxt_datain3      <= payload_16byte;
+                                             nxt_datain3      <= payload[127:0];
                                              nxt_mtyin3       <= 4'd0;
 
                                              pending_pkt_size <= pending_pkt_size - 14'd64 ;
@@ -590,7 +594,7 @@ module cmac_usplus_0_lbus_pkt_gen
                                              nxt_sopin0       <= 1'b0;
                                              nxt_enain0       <= 1'b1;
                                              nxt_eopin0       <= 1'b1;
-                                             nxt_datain0      <= payload_16byte;
+                                             nxt_datain0      <= payload[511:384];
                                              nxt_mtyin0       <= 14'd16 - pending_pkt_size;
 
                                              pending_pkt_size <= pending_pkt_48size ;
@@ -598,19 +602,19 @@ module cmac_usplus_0_lbus_pkt_gen
                                              nxt_sopin1       <= 1'b1;
                                              nxt_enain1       <= ~(tx_done_tmp & ~send_continuous_pkts_3d);
                                              nxt_eopin1       <= 1'b0;
-                                             nxt_datain1      <= payload_16byte_new;
+                                             nxt_datain1      <= payload[383:256];
                                              nxt_mtyin1       <= 4'd0;
 
                                              nxt_sopin2       <= 1'b0;
                                              nxt_enain2       <= ~(tx_done_tmp & ~send_continuous_pkts_3d);
                                              nxt_eopin2       <= 1'b0;
-                                             nxt_datain2      <= payload_16byte_new;
+                                             nxt_datain2      <= payload[255:128];
                                              nxt_mtyin2       <= 4'd0;
 
                                              nxt_sopin3       <= 1'b0;
                                              nxt_enain3       <= ~(tx_done_tmp & ~send_continuous_pkts_3d);
                                              nxt_eopin3       <= 1'b0;
-                                             nxt_datain3      <= payload_16byte_new;
+                                             nxt_datain3      <= payload[127:0];
                                              nxt_mtyin3       <= 4'd0;
                                              number_pkt_tx    <= number_pkt_tx + 16'd1;
                                              tx_done_reg      <= tx_done_tmp & ~send_continuous_pkts_3d;
@@ -621,13 +625,13 @@ module cmac_usplus_0_lbus_pkt_gen
                                              nxt_sopin0       <= 1'b0;
                                              nxt_enain0       <= 1'b1;
                                              nxt_eopin0       <= 1'b0;
-                                             nxt_datain0      <= payload_16byte;
+                                             nxt_datain0      <= payload[511:384];
                                              nxt_mtyin0       <= 4'd0;
 
                                              nxt_sopin1       <= 1'b0;
                                              nxt_enain1       <= 1'b1;
                                              nxt_eopin1       <= 1'b1;
-                                             nxt_datain1      <= payload_16byte;
+                                             nxt_datain1      <= payload[383:256];
                                              nxt_mtyin1       <= 14'd32 - pending_pkt_size;
 
                                              pending_pkt_size <= pending_pkt_32size ;
@@ -635,13 +639,13 @@ module cmac_usplus_0_lbus_pkt_gen
                                              nxt_sopin2       <= 1'b1;
                                              nxt_enain2       <= ~(tx_done_tmp & ~send_continuous_pkts_3d);
                                              nxt_eopin2       <= 1'b0;
-                                             nxt_datain2      <= payload_16byte_new;
+                                             nxt_datain2      <= payload[255:128];
                                              nxt_mtyin2       <= 4'd0;
 
                                              nxt_sopin3       <= 1'b0;
                                              nxt_enain3       <= ~(tx_done_tmp & ~send_continuous_pkts_3d);
                                              nxt_eopin3       <= 1'b0;
-                                             nxt_datain3      <= payload_16byte_new;
+                                             nxt_datain3      <= payload[127:0];
                                              nxt_mtyin3       <= 4'd0;
                                              number_pkt_tx    <= number_pkt_tx + 16'd1;
                                              tx_done_reg      <= tx_done_tmp & ~send_continuous_pkts_3d;
@@ -652,19 +656,19 @@ module cmac_usplus_0_lbus_pkt_gen
                                              nxt_sopin0       <= 1'b0;
                                              nxt_enain0       <= 1'b1;
                                              nxt_eopin0       <= 1'b0;
-                                             nxt_datain0      <= payload_16byte;
+                                             nxt_datain0      <= payload[511:384];
                                              nxt_mtyin0       <= 4'd0;
 
                                              nxt_sopin1       <= 1'b0;
                                              nxt_enain1       <= 1'b1;
                                              nxt_eopin1       <= 1'b0;
-                                             nxt_datain1      <= payload_16byte;
+                                             nxt_datain1      <= payload[383:256];
                                              nxt_mtyin1       <= 4'd0;
 
                                              nxt_sopin2       <= 1'b0;
                                              nxt_enain2       <= 1'b1;
                                              nxt_eopin2       <= 1'b1;
-                                             nxt_datain2      <= payload_16byte;
+                                             nxt_datain2      <= payload[255:128];
                                              nxt_mtyin2       <= 14'd48 - pending_pkt_size;
 
                                              pending_pkt_size <= pending_pkt_16size ;
@@ -672,7 +676,7 @@ module cmac_usplus_0_lbus_pkt_gen
                                              nxt_sopin3       <= 1'b1;
                                              nxt_enain3       <= ~(tx_done_tmp & ~send_continuous_pkts_3d);
                                              nxt_eopin3       <= 1'b0;
-                                             nxt_datain3      <= payload_16byte_new;
+                                             nxt_datain3      <= payload[127:0];
                                              nxt_mtyin3       <= 4'd0;
                                              number_pkt_tx    <= number_pkt_tx + 16'd1;
                                              tx_done_reg      <= tx_done_tmp & ~send_continuous_pkts_3d;
@@ -683,25 +687,25 @@ module cmac_usplus_0_lbus_pkt_gen
                                              nxt_sopin0       <= 1'b0;
                                              nxt_enain0       <= 1'b1;
                                              nxt_eopin0       <= 1'b0;
-                                             nxt_datain0      <= payload_16byte;
+                                             nxt_datain0      <= payload[511:384];
                                              nxt_mtyin0       <= 4'd0;
 
                                              nxt_sopin1       <= 1'b0;
                                              nxt_enain1       <= 1'b1;
                                              nxt_eopin1       <= 1'b0;
-                                             nxt_datain1      <= payload_16byte;
+                                             nxt_datain1      <= payload[383:256];
                                              nxt_mtyin1       <= 4'd0;
 
                                              nxt_sopin2       <= 1'b0;
                                              nxt_enain2       <= 1'b1;
                                              nxt_eopin2       <= 1'b0;
-                                             nxt_datain2      <= payload_16byte;
+                                             nxt_datain2      <= payload[255:128];
                                              nxt_mtyin2       <= 4'd0;
 
                                              nxt_sopin3       <= 1'b0;
                                              nxt_enain3       <= 1'b1;
                                              nxt_eopin3       <= 1'b1;
-                                             nxt_datain3      <= payload_16byte;
+                                             nxt_datain3      <= payload[127:0];
                                              nxt_mtyin3       <= 14'd64 - pending_pkt_size;
 
                                              pending_pkt_size <= lbus_pkt_size_proc ;
@@ -715,25 +719,25 @@ module cmac_usplus_0_lbus_pkt_gen
                                              nxt_sopin0       <= 1'b0;
                                              nxt_enain0       <= 1'b1;
                                              nxt_eopin0       <= 1'b0;
-                                             nxt_datain0      <= payload_16byte;
+                                             nxt_datain0      <= payload[511:384];
                                              nxt_mtyin0       <= 4'd0;
 
                                              nxt_sopin1       <= 1'b0;
                                              nxt_enain1       <= 1'b1;
                                              nxt_eopin1       <= 1'b0;
-                                             nxt_datain1      <= payload_16byte;
+                                             nxt_datain1      <= payload[383:256];
                                              nxt_mtyin1       <= 4'd0;
 
                                              nxt_sopin2       <= 1'b0;
                                              nxt_enain2       <= 1'b1;
                                              nxt_eopin2       <= 1'b0;
-                                             nxt_datain2      <= payload_16byte;
+                                             nxt_datain2      <= payload[255:128];
                                              nxt_mtyin2       <= 4'd0;
 
                                              nxt_sopin3       <= 1'b0;
                                              nxt_enain3       <= 1'b1;
                                              nxt_eopin3       <= 1'b0;
-                                             nxt_datain3      <= payload_16byte;
+                                             nxt_datain3      <= payload[127:0];
                                              nxt_mtyin3       <= 4'd0;
 
                                              pending_pkt_size <= pending_pkt_size - 14'd64 ;
@@ -895,12 +899,12 @@ module cmac_usplus_0_lbus_pkt_gen
                                          ctl_tx_send_lfi_r               <= 1'b0;
                                          ctl_tx_send_rfi_r               <= 1'b0;
                                          ctl_tx_test_pattern_r           <= 1'b0;
-                                         tx_payload_1                    <= 8'd0;
-                                         tx_payload_2                    <= 8'd0;
-                                         tx_payload_new                  <= 8'd0;
-                                         lbus_pkt_size_proc              <= 14'd0;
+                                         //tx_payload_1                    <= 8'd0;
+                                         //tx_payload_2                    <= 8'd0;
+                                         //tx_payload_new                  <= 8'd0;
+                                         //lbus_pkt_size_proc              <= 14'd0;
                                          number_pkt_tx                   <= 16'd0;
-                                         lbus_number_pkt_proc            <= 16'd0;
+                                         //lbus_number_pkt_proc            <= 16'd0;
                                          init_done                       <= 1'b0;
                                          gt_lock_led                     <= 1'b0;
                                          rx_aligned_led                  <= 1'b0;
@@ -940,7 +944,7 @@ module cmac_usplus_0_lbus_pkt_gen
                                          segment1_eop                    <= 1'b0;
                                          segment2_eop                    <= 1'b0;
                                          segment3_eop                    <= 1'b0;
-                                         payload_16byte                  <= 128'd0;
+                                         //payload_16byte                  <= 128'd0;
                                          pause_done_led                  <= 1'b0;
                                          ctl_tx_pause_req_r              <= 9'h0;
                                          ppp_req_cntr                    <= 5'h0; 

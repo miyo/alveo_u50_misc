@@ -334,7 +334,13 @@ module cmac_usplus_0_pkt_gen_mon
     output wire                rx_aligned_led,
     output wire                rx_done_led,
     output wire                rx_data_fail_led,
-    output wire                rx_busy_led
+    output wire                rx_busy_led,
+
+    output wire 	 payload_rd,
+    input wire [511:0] 	 payload,
+    input wire [15:0] 	 lbus_number_pkt_proc,
+    input wire [13:0] 	 lbus_pkt_size_proc,
+    output wire [7:0] 	 debug
     );
 
     wire                sanity_init_done;
@@ -420,7 +426,12 @@ cmac_usplus_0_lbus_pkt_gen
 .tx_errin3                             (tx_errin3),
 .tx_mtyin3                             (tx_mtyin3),
 .tx_ovfout                             (tx_ovfout),
-.tx_unfout                             (tx_unfout)
+.tx_unfout                             (tx_unfout),
+.payload_rd(payload_rd),
+.payload(payload),
+.lbus_number_pkt_proc(lbus_number_pkt_proc),
+.lbus_pkt_size_proc(lbus_pkt_size_proc),
+.debug(debug)
 );
 
 

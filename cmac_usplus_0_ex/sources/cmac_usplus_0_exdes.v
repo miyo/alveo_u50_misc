@@ -56,25 +56,8 @@ module cmac_usplus_0_exdes
     input [3 :0]  gt_rxn_in,
     output [3 :0] gt_txp_out,
     output [3 :0] gt_txn_out,
-
-    //input wire 	  send_continuous_pkts,
-    //input wire 	  lbus_tx_rx_restart_in,
-    //output wire   tx_done_led,
-    //output wire   tx_busy_led,
-
-    //output wire   rx_gt_locked_led,
-    //output wire   rx_aligned_led,
-    //output wire   rx_done_led,
-    //output wire   rx_data_fail_led,
-    //output wire   rx_busy_led,
-    //output wire   stat_reg_compare_out,
-
-    //input wire 	  sys_reset,
-    //input wire 	  pm_tick,
-
     input wire 	  gt_ref_clk_p,
     input wire 	  gt_ref_clk_n
-    //input wire 	  init_clk
 );
 
   parameter PKT_NUM      = 1000;    //// 1 to 65535 (Number of packets)
@@ -390,30 +373,11 @@ module cmac_usplus_0_exdes
   assign gtwiz_reset_tx_datapath    = 1'b0;
   assign gtwiz_reset_rx_datapath    = 1'b0;
 
-   reg [127:0]   my_tx_datain0;
-   reg [127:0]   my_tx_datain1;
-   reg [127:0]   my_tx_datain2;
-   reg [127:0]   my_tx_datain3;
-   reg 	  my_tx_enain0;
-   reg 	  my_tx_enain1;
-   reg 	  my_tx_enain2;
-   reg 	  my_tx_enain3;
-   reg 	  my_tx_eopin0;
-   reg 	  my_tx_eopin1;
-   reg 	  my_tx_eopin2;
-   reg 	  my_tx_eopin3;
-   reg 	  my_tx_errin0;
-   reg 	  my_tx_errin1;
-   reg 	  my_tx_errin2;
-   reg 	  my_tx_errin3;
-   reg [3:0] 	  my_tx_mtyin0;
-   reg [3:0] 	  my_tx_mtyin1;
-   reg [3:0] 	  my_tx_mtyin2;
-   reg [3:0] 	  my_tx_mtyin3;
-   reg 	  my_tx_sopin0;
-   reg 	  my_tx_sopin1;
-   reg 	  my_tx_sopin2;
-   reg 	  my_tx_sopin3;
+   reg [511:0] 	  payload;
+   wire		  payload_rd;
+   reg [15:0]     lbus_number_pkt_proc = 1'd1;
+   reg [13:0]     lbus_pkt_size_proc = 14'd64;
+   wire [7:0] 	  debug;
 
 cmac_usplus_0 DUT
 (
@@ -678,30 +642,30 @@ cmac_usplus_0 DUT
     .ctl_tx_pause_req                     (ctl_tx_pause_req),
     .ctl_tx_resend_pause                  (ctl_tx_resend_pause),
     .tx_rdyout                            (tx_rdyout),
-    .tx_datain0                           (my_tx_datain0),
-    .tx_datain1                           (my_tx_datain1),
-    .tx_datain2                           (my_tx_datain2),
-    .tx_datain3                           (my_tx_datain3),
-    .tx_enain0                            (my_tx_enain0),
-    .tx_enain1                            (my_tx_enain1),
-    .tx_enain2                            (my_tx_enain2),
-    .tx_enain3                            (my_tx_enain3),
-    .tx_eopin0                            (my_tx_eopin0),
-    .tx_eopin1                            (my_tx_eopin1),
-    .tx_eopin2                            (my_tx_eopin2),
-    .tx_eopin3                            (my_tx_eopin3),
-    .tx_errin0                            (my_tx_errin0),
-    .tx_errin1                            (my_tx_errin1),
-    .tx_errin2                            (my_tx_errin2),
-    .tx_errin3                            (my_tx_errin3),
-    .tx_mtyin0                            (my_tx_mtyin0),
-    .tx_mtyin1                            (my_tx_mtyin1),
-    .tx_mtyin2                            (my_tx_mtyin2),
-    .tx_mtyin3                            (my_tx_mtyin3),
-    .tx_sopin0                            (my_tx_sopin0),
-    .tx_sopin1                            (my_tx_sopin1),
-    .tx_sopin2                            (my_tx_sopin2),
-    .tx_sopin3                            (my_tx_sopin3),
+    .tx_datain0                           (tx_datain0),
+    .tx_datain1                           (tx_datain1),
+    .tx_datain2                           (tx_datain2),
+    .tx_datain3                           (tx_datain3),
+    .tx_enain0                            (tx_enain0),
+    .tx_enain1                            (tx_enain1),
+    .tx_enain2                            (tx_enain2),
+    .tx_enain3                            (tx_enain3),
+    .tx_eopin0                            (tx_eopin0),
+    .tx_eopin1                            (tx_eopin1),
+    .tx_eopin2                            (tx_eopin2),
+    .tx_eopin3                            (tx_eopin3),
+    .tx_errin0                            (tx_errin0),
+    .tx_errin1                            (tx_errin1),
+    .tx_errin2                            (tx_errin2),
+    .tx_errin3                            (tx_errin3),
+    .tx_mtyin0                            (tx_mtyin0),
+    .tx_mtyin1                            (tx_mtyin1),
+    .tx_mtyin2                            (tx_mtyin2),
+    .tx_mtyin3                            (tx_mtyin3),
+    .tx_sopin0                            (tx_sopin0),
+    .tx_sopin1                            (tx_sopin1),
+    .tx_sopin2                            (tx_sopin2),
+    .tx_sopin3                            (tx_sopin3),
     .tx_ovfout                            (tx_ovfout),
     .tx_unfout                            (tx_unfout),
     .tx_preamblein                        (tx_preamblein),
@@ -993,12 +957,17 @@ cmac_usplus_0_pkt_gen_mon
     .rx_aligned_led                       (rx_aligned_led),
     .rx_done_led                          (rx_done_led),
     .rx_data_fail_led                     (rx_data_fail_led),
-    .rx_busy_led                          (rx_busy_led)
+    .rx_busy_led                          (rx_busy_led),
+    .payload_rd                           (payload_rd),
+    .payload                              (payload),
+    .lbus_number_pkt_proc                 (lbus_number_pkt_proc),
+    .lbus_pkt_size_proc                   (lbus_pkt_size_proc),
+    .debug(debug)
 );
 
    assign init_clk = gt_ref_clk_out;
 
-   vio_0 vio_0_i(.clk(init_clk),
+   vio_0 vio_0_i(.clk(txusrclk2),
 		 .probe_in0(tx_done_led),
 		 .probe_in1(tx_busy_led),
 		 .probe_in2(rx_gt_locked_led),
@@ -1007,9 +976,8 @@ cmac_usplus_0_pkt_gen_mon
 		 .probe_in5(rx_data_fail_led),
 		 .probe_in6(rx_busy_led),
 		 .probe_in7(stat_reg_compare_out),
-		 .probe_out0(send_continuous_pkts),
-		 .probe_out1(lbus_tx_rx_restart_in),
-		 .probe_out2(pm_tick)
+		 .probe_out0(user_kick),
+		 .probe_out1(pm_tick)
 		 );
 
    reg [31:0] 	  counter = 32'd0;
@@ -1026,7 +994,42 @@ cmac_usplus_0_pkt_gen_mon
 	 reset_counter <= reset_counter + 1;
       end
    end
+
+   reg user_kick_reg = 1'b0;
+   reg user_kick_d = 1'b0;
+   reg[3:0] user_state = 4'd0;
    
+   always @(posedge init_clk) begin
+      user_kick_d <= user_kick;
+      case(user_state)
+	0 : begin
+	   if(user_kick_d == 1'b0 && user_kick == 1'b1) begin
+	      user_kick_reg <= 1'b1;
+	      user_state <= user_state + 1;
+	   end else begin
+	      user_kick_reg <= 1'b0;
+	   end
+	end
+	1 : begin
+	   if(tx_busy_led == 1'b1) begin // TX begin
+	      user_kick_reg <= 1'b0;
+	      user_state <= user_state + 1;
+	   end
+	end
+	2 : begin
+	   if(tx_done_led == 1'b1) begin // TX done
+	      user_state <= 0;
+	   end
+	end
+	default: begin
+	   user_state <= 0;
+	   user_kick_reg <= 1'b0;
+	end
+      endcase // case (user_state)
+   end // always @ (posedge init_clk)
+
+   assign send_continuous_pkts  = user_kick_reg;
+   assign lbus_tx_rx_restart_in = user_kick_reg;
 
    ila_0 ila_0_i(.clk(init_clk),
 		 .probe0(counter)
@@ -1036,80 +1039,19 @@ cmac_usplus_0_pkt_gen_mon
 		 .probe0({rx_enaout0, rx_eopout0, rx_sopout0, rx_dataout0}),
 		 .probe1({rx_enaout1, rx_eopout1, rx_sopout1, rx_dataout1}),
 		 .probe2({rx_enaout2, rx_eopout2, rx_sopout2, rx_dataout2}),
-		 .probe3({rx_enaout3, rx_eopout3, rx_sopout3, rx_dataout3})
+		 .probe3({rx_enaout3, rx_eopout3, rx_sopout3, rx_dataout3}),
+		 .probe4(user_state),
+		 .probe5(debug)
 		 );
 
-   wire user_kick;
-   vio_1 vio_1_i(.clk(txusrclk2),
-		 .probe_in0(tx_rdyout),
-		 .probe_out0(user_kick)
-		 );
-   
-   reg user_kick_d = 1'b0;
    always @(posedge txusrclk2) begin
-      user_kick_d <= user_kick;
-      if(user_kick_d == 1'b0 && user_kick == 1'b1) begin
-	 
-	 my_tx_datain0[127:80] <= 48'h98039b1d6389; // Destination MAC
-	 my_tx_datain0[79:32]  <= 48'h000102030405; // Source MAC
-	 my_tx_datain0[31:16]  <= 16'h3434; // Ether header
-	 my_tx_datain0[15:0] <= 16'h4865; // He
-	 my_tx_datain1 <= 128'h6c6c6f20776f726c6400000000000000; // llo world
-	 my_tx_datain2 <= 128'h00000000000000000000000000000000;
-	 my_tx_datain3 <= 128'h00000000000000000000000000000000;
-	 
-	 my_tx_enain0 <= 1'b1;
-	 my_tx_enain1 <= 1'b1;
-	 my_tx_enain2 <= 1'b1;
-	 my_tx_enain3 <= 1'b1;
-	 
-	 my_tx_sopin0 <= 1'b1;
-	 my_tx_sopin1 <= 1'b0;
-	 my_tx_sopin2 <= 1'b0;
-	 my_tx_sopin3 <= 1'b0;
-
-	 my_tx_eopin0 <= 1'b0;
-	 my_tx_eopin1 <= 1'b0;
-	 my_tx_eopin2 <= 1'b0;
-	 my_tx_eopin3 <= 1'b1;
-	 
-	 my_tx_errin0 <= 1'b0;
-	 my_tx_errin1 <= 1'b0;
-	 my_tx_errin2 <= 1'b0;
-	 my_tx_errin3 <= 1'b0;
-	 
-	 my_tx_mtyin0 <= 4'h0;
-	 my_tx_mtyin1 <= 4'h0;
-	 my_tx_mtyin2 <= 4'h0;
-	 my_tx_mtyin3 <= 4'h0;
-      end else begin
-	 my_tx_enain0 <= 1'b0;
-	 my_tx_enain1 <= 1'b0;
-	 my_tx_enain2 <= 1'b0;
-	 my_tx_enain3 <= 1'b0;
-	 
-	 my_tx_sopin0 <= 1'b0;
-	 my_tx_sopin1 <= 1'b0;
-	 my_tx_sopin2 <= 1'b0;
-	 my_tx_sopin3 <= 1'b0;
-
-	 my_tx_eopin0 <= 1'b0;
-	 my_tx_eopin1 <= 1'b0;
-	 my_tx_eopin2 <= 1'b0;
-	 my_tx_eopin3 <= 1'b0;
-	 
-	 my_tx_errin0 <= 1'b0;
-	 my_tx_errin1 <= 1'b0;
-	 my_tx_errin2 <= 1'b0;
-	 my_tx_errin3 <= 1'b0;
-	 
-	 my_tx_mtyin0 <= 4'h0;
-	 my_tx_mtyin1 <= 4'h0;
-	 my_tx_mtyin2 <= 4'h0;
-	 my_tx_mtyin3 <= 4'h0;
-      end
+      payload[511:464] <= 48'h98039b1d6389; // Destination MAC
+      payload[463:416] <= 48'h000102030405; // Source MAC
+      payload[415:400] <= 16'h3434; // Ether header
+      payload[399:312] <= 88'h48656c6c6f20776f726c64; // Hello world
+      payload[311:0]   <= 0;
+      lbus_number_pkt_proc <= 16'd1;
+      lbus_pkt_size_proc <= 14'd64;
    end
 
 endmodule
-
-
