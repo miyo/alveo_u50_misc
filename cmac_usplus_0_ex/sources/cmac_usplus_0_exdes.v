@@ -1028,7 +1028,7 @@ cmac_usplus_0_pkt_gen_mon
       endcase // case (user_state)
    end // always @ (posedge init_clk)
 
-   assign send_continuous_pkts  = user_kick_reg;
+   assign send_continuous_pkts  = 1'b0;
    assign lbus_tx_rx_restart_in = user_kick_reg;
 
    ila_0 ila_0_i(.clk(init_clk),

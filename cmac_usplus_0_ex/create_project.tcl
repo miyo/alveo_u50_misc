@@ -1,7 +1,9 @@
-set project_dir    "./cmac_usplus_0_ex"
+set project_dir    "./prj"
 set project_name   "cmac_usplus_0_ex"
+set top_module     "cmac_usplus_0_exdes"
 set project_target "xcu50-fsvh2104-2-e"
 set project_board "xilinx.com:au50:part0:1.0"
+
 set source_files { \
 			./sources/cmac_usplus_0_axi4_lite_user_if.v \
 			./sources/cmac_usplus_0_exdes.v \
@@ -31,7 +33,7 @@ import_ip -files ./ip/ila_1.xci
 import_ip -files ./ip/vio_0.xci
 import_ip -files ./ip/vio_1.xci
 
-set_property top cmac_usplus_0_exdes [current_fileset]
+set_property top $top_module [current_fileset]
 set_property target_constrs_file ./sources/cmac_usplus_0_example_top.xdc [current_fileset -constrset]
 
 update_compile_order -fileset sources_1
