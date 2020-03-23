@@ -158,7 +158,7 @@ module cmac_usplus_0_lbus_pkt_gen
 
     ////State Registers for TX
     reg  [3:0]     tx_prestate;
-   assign debug = tx_prestate;
+    assign debug = tx_prestate;
 
     reg [15:0] 	   number_pkt_tx;
     reg  [13:0]    pending_pkt_size;
@@ -562,6 +562,8 @@ module cmac_usplus_0_lbus_pkt_gen
                                              nxt_mtyin3     <= 4'd0;
                                              number_pkt_tx  <= number_pkt_tx + 16'd1;
                                              //tx_done_reg    <= tx_done_tmp & ~send_continuous_pkts_3d;
+                                             tx_done_reg      <= 1'b1;
+                                             pending_pkt_size <= 0;
                                          end
                                          //// Default 64 byte packet
                                          //// SOP in first segment
@@ -603,27 +605,32 @@ module cmac_usplus_0_lbus_pkt_gen
                                              nxt_datain0      <= payload[511:384];
                                              nxt_mtyin0       <= 14'd16 - pending_pkt_size;
 
-                                             pending_pkt_size <= pending_pkt_48size ;
+                                             pending_pkt_size <= 0;
 
-                                             nxt_sopin1       <= 1'b1;
-                                             nxt_enain1       <= ~(tx_done_tmp & ~send_continuous_pkts_3d);
+                                             //nxt_sopin1       <= 1'b1;
+                                             //nxt_enain1       <= ~(tx_done_tmp & ~send_continuous_pkts_3d);
+                                             nxt_sopin1       <= 1'b0;
+                                             nxt_enain1       <= 1'b0;
                                              nxt_eopin1       <= 1'b0;
                                              nxt_datain1      <= payload[383:256];
                                              nxt_mtyin1       <= 4'd0;
 
                                              nxt_sopin2       <= 1'b0;
-                                             nxt_enain2       <= ~(tx_done_tmp & ~send_continuous_pkts_3d);
+                                             //nxt_enain2       <= ~(tx_done_tmp & ~send_continuous_pkts_3d);
+                                             nxt_enain2       <= 1'b0;
                                              nxt_eopin2       <= 1'b0;
                                              nxt_datain2      <= payload[255:128];
                                              nxt_mtyin2       <= 4'd0;
 
                                              nxt_sopin3       <= 1'b0;
-                                             nxt_enain3       <= ~(tx_done_tmp & ~send_continuous_pkts_3d);
+                                             //nxt_enain3       <= ~(tx_done_tmp & ~send_continuous_pkts_3d);
+                                             nxt_enain3       <= 1'b0;
                                              nxt_eopin3       <= 1'b0;
                                              nxt_datain3      <= payload[127:0];
                                              nxt_mtyin3       <= 4'd0;
                                              number_pkt_tx    <= number_pkt_tx + 16'd1;
                                              //tx_done_reg      <= tx_done_tmp & ~send_continuous_pkts_3d;
+                                             tx_done_reg      <= 1'b1;
                                          end
                                          //// EOP in Segment 1 
                                          else if (pending_pkt_size <= 14'd32)
@@ -640,21 +647,25 @@ module cmac_usplus_0_lbus_pkt_gen
                                              nxt_datain1      <= payload[383:256];
                                              nxt_mtyin1       <= 14'd32 - pending_pkt_size;
 
-                                             pending_pkt_size <= pending_pkt_32size ;
+                                             pending_pkt_size <= 0;
 
-                                             nxt_sopin2       <= 1'b1;
-                                             nxt_enain2       <= ~(tx_done_tmp & ~send_continuous_pkts_3d);
+                                             //nxt_sopin2       <= 1'b1;
+                                             //nxt_enain2       <= ~(tx_done_tmp & ~send_continuous_pkts_3d);
+                                             nxt_sopin2       <= 1'b0;
+                                             nxt_enain2       <= 1'b0;
                                              nxt_eopin2       <= 1'b0;
                                              nxt_datain2      <= payload[255:128];
                                              nxt_mtyin2       <= 4'd0;
 
                                              nxt_sopin3       <= 1'b0;
-                                             nxt_enain3       <= ~(tx_done_tmp & ~send_continuous_pkts_3d);
+                                             //nxt_enain3       <= ~(tx_done_tmp & ~send_continuous_pkts_3d);
+                                             nxt_enain3       <= 1'b0;
                                              nxt_eopin3       <= 1'b0;
                                              nxt_datain3      <= payload[127:0];
                                              nxt_mtyin3       <= 4'd0;
                                              number_pkt_tx    <= number_pkt_tx + 16'd1;
                                              //tx_done_reg      <= tx_done_tmp & ~send_continuous_pkts_3d;
+                                             tx_done_reg      <= 1'b1;
                                          end
                                          //// EOP in Segment 2 
                                          else if (pending_pkt_size <= 14'd48)
@@ -677,15 +688,18 @@ module cmac_usplus_0_lbus_pkt_gen
                                              nxt_datain2      <= payload[255:128];
                                              nxt_mtyin2       <= 14'd48 - pending_pkt_size;
 
-                                             pending_pkt_size <= pending_pkt_16size ;
+                                             pending_pkt_size <= 0;
 
-                                             nxt_sopin3       <= 1'b1;
-                                             nxt_enain3       <= ~(tx_done_tmp & ~send_continuous_pkts_3d);
+                                             //nxt_sopin3       <= 1'b1;
+                                             //nxt_enain3       <= ~(tx_done_tmp & ~send_continuous_pkts_3d);
+                                             nxt_sopin3       <= 1'b0;
+                                             nxt_enain3       <= 1'b0;
                                              nxt_eopin3       <= 1'b0;
                                              nxt_datain3      <= payload[127:0];
                                              nxt_mtyin3       <= 4'd0;
                                              number_pkt_tx    <= number_pkt_tx + 16'd1;
                                              //tx_done_reg      <= tx_done_tmp & ~send_continuous_pkts_3d;
+                                             tx_done_reg      <= 1'b1;
                                          end
                                          //// EOP in Segment 3 
                                          else if (pending_pkt_size <= 14'd64)
@@ -714,10 +728,11 @@ module cmac_usplus_0_lbus_pkt_gen
                                              nxt_datain3      <= payload[127:0];
                                              nxt_mtyin3       <= 14'd64 - pending_pkt_size;
 
-                                             pending_pkt_size <= lbus_pkt_size_proc ;
-                                             first_pkt        <= ~(tx_done_tmp & ~send_continuous_pkts_3d); 
+                                             pending_pkt_size <= 0;
+                                             //first_pkt        <= ~(tx_done_tmp & ~send_continuous_pkts_3d); 
                                              number_pkt_tx    <= number_pkt_tx + 16'd1;
                                              //tx_done_reg      <= tx_done_tmp & ~send_continuous_pkts_3d;
+                                             tx_done_reg      <= 1'b1;
                                          end
                                          //// Default 64 byte packet
                                          else
@@ -763,11 +778,12 @@ module cmac_usplus_0_lbus_pkt_gen
                                          //// State transition
                                          if  (stat_rx_aligned_1d == 1'b0) 
                                              tx_prestate <= STATE_TX_IDLE;
-                                         //else if (tx_done_reg == 1'b1)
-                                         //    tx_prestate <= STATE_LBUS_TX_DONE;
-                                         else if (pending_pkt_size <= 14'd64)
+                                         else if (tx_done_reg == 1'b1)
                                              tx_prestate <= STATE_LBUS_TX_DONE;
-                                             tx_done_reg <= 1'b1;
+                                         //else if (pending_pkt_size <= 14'd64) begin
+                                         //    tx_prestate <= STATE_LBUS_TX_DONE;
+                                         //    tx_done_reg <= 1'b1;
+					 //end
                                          else if ((tx_rdyout_d == 1'b0) || (tx_ovfout_d == 1'b1) || (tx_unfout_d == 1'b1))
                                              tx_prestate <= STATE_LBUS_TX_HALT;
                                          else
