@@ -46,16 +46,16 @@
 ////  PART OF THIS FILE AT ALL TIMES.
 ////------------------------------------------------------------------------------
 
-
+`default_nettype none
 `timescale 1ps/1ps
 
 (* DowngradeIPIdentifiedWarnings="yes" *)
 module cmac_usplus_0_exdes
 (
-    input [3 :0]  gt_rxp_in,
-    input [3 :0]  gt_rxn_in,
-    output [3 :0] gt_txp_out,
-    output [3 :0] gt_txn_out,
+    input wire [3 :0]  gt_rxp_in,
+    input wire [3 :0]  gt_rxn_in,
+    output wire [3 :0] gt_txp_out,
+    output wire [3 :0] gt_txn_out,
     input wire 	  gt_ref_clk_p,
     input wire 	  gt_ref_clk_n
 );
@@ -373,10 +373,10 @@ module cmac_usplus_0_exdes
   assign gtwiz_reset_tx_datapath    = 1'b0;
   assign gtwiz_reset_rx_datapath    = 1'b0;
 
-   reg [511:0] 	  payload;
+   wire [511:0]   payload;
    wire		  payload_rd;
-   reg [15:0]     lbus_number_pkt_proc = 1'd1;
-   reg [13:0]     lbus_pkt_size_proc = 14'd64;
+   wire [15:0] 	  lbus_number_pkt_proc = 1'd1;
+   reg [13:0] 	  lbus_pkt_size_proc;
    wire [7:0] 	  debug;
 
 cmac_usplus_0 DUT
@@ -967,19 +967,6 @@ cmac_usplus_0_pkt_gen_mon
 
    assign init_clk = gt_ref_clk_out;
 
-   vio_0 vio_0_i(.clk(txusrclk2),
-		 .probe_in0(tx_done_led),
-		 .probe_in1(tx_busy_led),
-		 .probe_in2(rx_gt_locked_led),
-		 .probe_in3(rx_aligned_led),
-		 .probe_in4(rx_done_led),
-		 .probe_in5(rx_data_fail_led),
-		 .probe_in6(rx_busy_led),
-		 .probe_in7(stat_reg_compare_out),
-		 .probe_out0(user_kick),
-		 .probe_out1(pm_tick)
-		 );
-
    reg [31:0] 	  counter = 32'd0;
    reg [7:0] reset_counter = 8'd0;
    always @(posedge init_clk) begin
@@ -994,16 +981,21 @@ cmac_usplus_0_pkt_gen_mon
 	 reset_counter <= reset_counter + 1;
       end
    end
-
-   reg user_kick_reg = 1'b0;
-   reg user_kick_d = 1'b0;
-   reg[3:0] user_state = 4'd0;
    
-   always @(posedge init_clk) begin
-      user_kick_d <= user_kick;
+   wire user_kick;
+   reg user_kick_reg = 1'b0;
+   reg user_kick_d1 = 1'b0;
+   reg user_kick_d2 = 1'b0;
+   reg[3:0] user_state = 4'd0;
+
+   reg 	    recv_packet;
+   
+   always @(posedge txusrclk2) begin
+      user_kick_d1 <= user_kick || recv_packet;
+      user_kick_d2 <= user_kick_d1;
       case(user_state)
 	0 : begin
-	   if(user_kick_d == 1'b0 && user_kick == 1'b1) begin
+	   if(user_kick_d2 == 1'b0 && user_kick_d1 == 1'b1) begin
 	      user_kick_reg <= 1'b1;
 	      user_state <= user_state + 1;
 	   end else begin
@@ -1031,6 +1023,98 @@ cmac_usplus_0_pkt_gen_mon
    assign send_continuous_pkts  = 1'b0;
    assign lbus_tx_rx_restart_in = user_kick_reg;
 
+   reg [511:0] fifo_d;
+   wire [511:0] fifo_q;
+   reg 		fifo_wr = 1'b0;
+   wire 	fifo_rd;
+   wire 	fifo_full, fifo_empty;
+   
+   fifo_512_256_ft fifo_512_256_ft_i(.wr_clk(txusrclk2),
+				     .rd_clk(txusrclk2),
+				     .rst(sys_reset), // async
+				     .din(fifo_d),
+				     .wr_en(fifo_wr),
+				     .full(fifo_full),
+				     .dout(fifo_q),
+				     .empty(fifo_empty),
+				     .rd_en(fifo_rd),
+				     .wr_rst_busy(),
+				     .rd_rst_busy()
+				     );
+   assign payload = fifo_q;
+   assign fifo_rd = payload_rd;
+
+   reg [13:0] recv_packet_bytes;
+   wire       rx_eopout;
+   reg 	      receiving_state = 1'b0;
+   always @(posedge txusrclk2) begin
+      if(rx_sopout0 == 1'b1 && rx_enaout0 == 1'b1) begin
+	 if(rx_dataout0[31:16] == 16'h3434) begin
+	    fifo_wr <= 1'b1;
+	    fifo_d <= {{rx_dataout0[79:32], rx_dataout0[127:80], rx_dataout0[31:0]},
+		       rx_dataout1, rx_dataout2, rx_dataout3};
+	    recv_packet_bytes <= 14'd64;
+	    if(rx_eopout3 == 1'b1 && rx_enaout3 == 1'b1) begin
+	       recv_packet <= 1'b1;
+	       lbus_pkt_size_proc <= 14'd64;
+	       receiving_state <= 1'b0;
+	    end else begin
+	       recv_packet <= 1'b0;
+	       receiving_state <= 1'b1; // to continue to receive
+	    end
+	 end else begin // if (rx_dataout0[15:0] == 16'h3434)
+	    fifo_wr <= 1'b0;
+	    receiving_state <= 1'b0;
+	 end
+      end else if(rx_enaout0 == 1'b1 && receiving_state == 1'b1) begin
+	 fifo_wr <= 1'b1;
+	 fifo_d <= {rx_dataout0, rx_dataout1, rx_dataout2, rx_dataout3};
+	 if(rx_enaout3 && rx_eopout3 == 1'b1) begin
+	    recv_packet_bytes <= recv_packet_bytes + (16 - rx_mtyout3) + 48;
+	    lbus_pkt_size_proc <= recv_packet_bytes + (16 - rx_mtyout3) + 48;
+	    recv_packet <= 1'b1;
+	    receiving_state <= 1'b0;
+	 end else if(rx_enaout2 && rx_eopout2 == 1'b1) begin
+	    recv_packet_bytes <= recv_packet_bytes + (16 - rx_mtyout2) + 32;
+	    lbus_pkt_size_proc <= recv_packet_bytes + (16 - rx_mtyout2) + 32;
+	    recv_packet <= 1'b1;
+	    receiving_state <= 1'b0;
+	 end else if(rx_enaout1 && rx_eopout1 == 1'b1) begin
+	    recv_packet_bytes <= recv_packet_bytes + (16 - rx_mtyout1) + 16;
+	    lbus_pkt_size_proc <= recv_packet_bytes + (16 - rx_mtyout1) + 16;
+	    recv_packet <= 1'b1;
+	    receiving_state <= 1'b0;
+	 end else if(rx_enaout0 && rx_eopout0 == 1'b1) begin
+	    recv_packet_bytes <= recv_packet_bytes + (16 - rx_mtyout0);
+	    lbus_pkt_size_proc <= recv_packet_bytes + (16 - rx_mtyout0);
+	    recv_packet <= 1'b1;
+	    receiving_state <= 1'b0;
+	 end else begin
+	    receiving_state <= 1'b1; // to continue to receive
+	    recv_packet <= 1'b0;
+	    recv_packet_bytes <= recv_packet_bytes + 14'd64;
+	 end
+      end else begin // if (rx_enaout0 == 1'b1 && receiving_state == 1'b1)
+	 fifo_wr <= 1'b0;
+      end
+      if(recv_packet == 1'b1) begin
+	 recv_packet <= 1'b0;
+      end
+   end
+
+   vio_0 vio_0_i(.clk(txusrclk2),
+		 .probe_in0(tx_done_led),
+		 .probe_in1(tx_busy_led),
+		 .probe_in2(rx_gt_locked_led),
+		 .probe_in3(rx_aligned_led),
+		 .probe_in4(rx_done_led),
+		 .probe_in5(rx_data_fail_led),
+		 .probe_in6(rx_busy_led),
+		 .probe_in7(stat_reg_compare_out),
+		 .probe_out0(user_kick),
+		 .probe_out1(pm_tick)
+		 );
+   
    ila_0 ila_0_i(.clk(init_clk),
 		 .probe0(counter)
 		 );
@@ -1040,18 +1124,14 @@ cmac_usplus_0_pkt_gen_mon
 		 .probe1({rx_enaout1, rx_eopout1, rx_sopout1, rx_dataout1}),
 		 .probe2({rx_enaout2, rx_eopout2, rx_sopout2, rx_dataout2}),
 		 .probe3({rx_enaout3, rx_eopout3, rx_sopout3, rx_dataout3}),
-		 .probe4(user_state),
-		 .probe5(debug)
+		 .probe4({user_kick, user_kick_d1, user_kick_d2, user_kick_reg, user_state}),
+		 .probe5(debug),
+		 .probe6(recv_packet_bytes),
+		 .probe7(recv_packet),
+		 .probe8({fifo_rd, fifo_q}),
+		 .probe9({fifo_wr, fifo_d})
 		 );
 
-   always @(posedge txusrclk2) begin
-      payload[511:464] <= 48'h98039b1d6389; // Destination MAC
-      payload[463:416] <= 48'h000102030405; // Source MAC
-      payload[415:400] <= 16'h3434; // Ether header
-      payload[399:312] <= 88'h48656c6c6f20776f726c64; // Hello world
-      payload[311:0]   <= 0;
-      lbus_number_pkt_proc <= 16'd1;
-      lbus_pkt_size_proc <= 14'd64;
-   end
+endmodule // cmac_usplus_0_exdes
 
-endmodule
+`default_nettype wire
