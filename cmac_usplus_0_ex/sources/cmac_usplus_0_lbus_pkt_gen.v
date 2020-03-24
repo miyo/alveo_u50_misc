@@ -513,11 +513,6 @@ module cmac_usplus_0_lbus_pkt_gen
                                              //end
 
                                          end // if (pending_pkt_size <= 14'd64 || pkt_size_64 == 1'b1)
-                                         if (pending_pkt_size > 14'd64) begin
-                                             payload_rd <= 1'b1;
-                                         end else begin
-                                             payload_rd <= 1'b0;
-                                         end
                                          if (tx_done_reg == 1'b1)
                                          begin
                                              nxt_enain0     <= 1'b0;
@@ -776,23 +771,28 @@ module cmac_usplus_0_lbus_pkt_gen
                                              $display( "INFO : Stream continuous packet mode disabled"); end
 
                                          //// State transition
-                                         if  (stat_rx_aligned_1d == 1'b0) 
+                                         if  (stat_rx_aligned_1d == 1'b0) begin
                                              tx_prestate <= STATE_TX_IDLE;
-                                         else if (tx_done_reg == 1'b1)
+                                             payload_rd <= 1'b0;
+                                         end else if (tx_done_reg == 1'b1) begin
                                              tx_prestate <= STATE_LBUS_TX_DONE;
-                                         //else if (pending_pkt_size <= 14'd64) begin
-                                         //    tx_prestate <= STATE_LBUS_TX_DONE;
-                                         //    tx_done_reg <= 1'b1;
-					 //end
-                                         else if ((tx_rdyout_d == 1'b0) || (tx_ovfout_d == 1'b1) || (tx_unfout_d == 1'b1))
+                                             payload_rd <= 1'b0;
+                                         end else if ((tx_rdyout_d == 1'b0) || (tx_ovfout_d == 1'b1) || (tx_unfout_d == 1'b1)) begin
                                              tx_prestate <= STATE_LBUS_TX_HALT;
-                                         else
+                                             payload_rd <= 1'b0;
+                                         end else begin
                                              tx_prestate <= STATE_LBUS_TX_ENABLE;
+					     if (pending_pkt_size > 14'd64) begin
+                                                 payload_rd <= 1'b1;
+                                             end else begin
+                                                 payload_rd <= 1'b0;
+                                             end
+                                          end
+
                                      end
             STATE_LBUS_TX_HALT       :
                                      begin
                                          tx_halt <= 1'b1;
-                                         payload_rd <= 1'b0;
                                          if  ((tx_ovfout_d == 1'b1) || (tx_unfout_d == 1'b1))
                                              tx_fail_reg <= 1'b1;
 
@@ -800,14 +800,23 @@ module cmac_usplus_0_lbus_pkt_gen
                                              $display( "INFO : Stream continuous packet mode disabled"); end
 
                                          //// State transition
-                                         if  (stat_rx_aligned_1d == 1'b0) 
+                                         if  (stat_rx_aligned_1d == 1'b0) begin
                                              tx_prestate <= STATE_TX_IDLE;
-                                         else if ((tx_rdyout_d == 1'b1) && (tx_ovfout_d == 1'b0) && (tx_unfout_d == 1'b0))
+                                             payload_rd <= 1'b0;
+                                         end else if ((tx_rdyout_d == 1'b1) && (tx_ovfout_d == 1'b0) && (tx_unfout_d == 1'b0)) begin
                                              tx_prestate <= STATE_LBUS_TX_ENABLE;
-                                         else if ((tx_ovfout_d == 1'b1) || (tx_unfout_d == 1'b1))
+					     if (pending_pkt_size > 14'd64) begin
+                                                 payload_rd <= 1'b1;
+                                             end else begin
+                                                 payload_rd <= 1'b0;
+                                             end
+                                         end else if ((tx_ovfout_d == 1'b1) || (tx_unfout_d == 1'b1)) begin
                                              tx_prestate <= STATE_LBUS_TX_DONE;
-                                         else
+                                             payload_rd <= 1'b0;
+                                         end else begin
                                              tx_prestate <= STATE_LBUS_TX_HALT;
+                                             payload_rd <= 1'b0;
+					 end
                                      end
             STATE_LBUS_TX_DONE       :
                                      begin

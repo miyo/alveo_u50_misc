@@ -1129,7 +1129,8 @@ cmac_usplus_0_pkt_gen_mon
 		 .probe6(recv_packet_bytes),
 		 .probe7(recv_packet),
 		 .probe8({fifo_rd, fifo_q}),
-		 .probe9({fifo_wr, fifo_d})
+		 .probe9({fifo_wr, fifo_d}),
+		 .probe10(tx_rdyout)
 		 );
 
 endmodule // cmac_usplus_0_exdes
