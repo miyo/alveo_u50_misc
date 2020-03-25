@@ -965,14 +965,15 @@ cmac_usplus_0_pkt_gen_mon
     .debug(debug)
 );
 
-   assign init_clk = gt_ref_clk_out;
+    assign init_clk = gt_ref_clk_out;
+    
+    reg [31:0] 	  counter = 32'd0;
+    reg [7:0] reset_counter = 8'd0;
+    always @(posedge init_clk) begin
+	counter <= counter + 1;
+    end
 
-   reg [31:0] 	  counter = 32'd0;
-   reg [7:0] reset_counter = 8'd0;
-   always @(posedge init_clk) begin
-      counter <= counter + 1;
-   end
-
+    //resetgen#(.RESET_COUNT(100)) resetgen_i(clk(init_clk), .reset_in(1'b0), .reset_out(sys_reset));
    always @(posedge init_clk) begin
       if(reset_counter == 100) begin
 	 sys_reset <= 1'b0;
@@ -1023,9 +1024,9 @@ cmac_usplus_0_pkt_gen_mon
    assign send_continuous_pkts  = 1'b0;
    assign lbus_tx_rx_restart_in = user_kick_reg;
 
-   reg [511:0] fifo_d;
+   wire [511:0] fifo_d;
    wire [511:0] fifo_q;
-   reg 		fifo_wr = 1'b0;
+   wire 	fifo_wr;
    wire 	fifo_rd;
    wire 	fifo_full, fifo_empty;
    
@@ -1041,66 +1042,93 @@ cmac_usplus_0_pkt_gen_mon
 				     .wr_rst_busy(),
 				     .rd_rst_busy()
 				     );
-   assign payload = fifo_q;
-   assign fifo_rd = payload_rd;
+    assign payload = fifo_q;
+    assign fifo_rd = payload_rd;
 
-   reg [13:0] recv_packet_bytes;
-   wire       rx_eopout;
-   reg 	      receiving_state = 1'b0;
-   always @(posedge txusrclk2) begin
-      if(rx_sopout0 == 1'b1 && rx_enaout0 == 1'b1) begin
-	 if(rx_dataout0[31:16] == 16'h3434) begin
-	    fifo_wr <= 1'b1;
-	    fifo_d <= {{rx_dataout0[79:32], rx_dataout0[127:80], rx_dataout0[31:0]},
-		       rx_dataout1, rx_dataout2, rx_dataout3};
-	    recv_packet_bytes <= 14'd64;
-	    if(rx_eopout3 == 1'b1 && rx_enaout3 == 1'b1) begin
-	       recv_packet <= 1'b1;
-	       lbus_pkt_size_proc <= 14'd64;
-	       receiving_state <= 1'b0;
+    wire [7:0] recv_mty = rx_eopout3 == 1'b1 ? rx_mtyout3
+	                : rx_eopout2 == 1'b1 ? rx_mtyout2 + 8'd16
+	                : rx_eopout1 == 1'b1 ? rx_mtyout1 + 8'd32
+	                : rx_eopout0 == 1'b1 ? rx_mtyout0 + 8'd48
+                        : 8'd0;
+	       
+    wire [111:0] ether_header_data;
+    wire         ether_header_valid;
+    wire [511:0] ether_data_data;
+    wire         ether_data_valid;
+    wire         ether_data_sop;
+    wire         ether_data_eop;
+    wire [7:0]   ether_data_mty;
+    ether_rx#(.APP_KEY(16'h3434)) ether_rx_i
+    (
+     .clk(txusrclk2),
+     .reset(1'b0),
+     .recv_data({rx_dataout0, rx_dataout1, rx_dataout2, rx_dataout3}),
+     .recv_valid(rx_enaout0),
+     .recv_sop(rx_sopout0),
+     .recv_eop(rx_eopout0 || rx_eopout1 || rx_eopout2 || rx_eopout3),
+     .recv_mty(recv_mty),
+     .ether_header_data(ether_header_data),
+     .ether_header_valid(ether_header_valid),
+     .ether_data_data(ether_data_data),
+     .ether_data_valid(ether_data_valid),
+     .ether_data_sop(ether_data_sop),
+     .ether_data_eop(ether_data_eop),
+     .ether_data_mty(ether_data_mty)
+     );
+
+    wire send_sop, send_eop;
+    wire [7:0] send_mty;
+
+    ether_tx ether_tx_i
+    (
+     .clk(txusrclk2),
+     .reset(1'b0),
+     .ether_header_data(ether_header_data),
+     .ether_header_valid(ether_header_valid),
+     .ether_data_data(ether_data_data),
+     .ether_data_valid(ether_data_valid),
+     .ether_data_sop(ether_data_sop),
+     .ether_data_eop(ether_data_eop),
+     .ether_data_mty(ether_data_mty),
+     .send_data(fifo_d),
+     .send_valid(fifo_wr),
+     .send_sop(send_sop),
+     .send_eop(send_eop),
+     .send_mty(send_mty)
+     );
+
+    reg[7:0] ether_tx_state;
+    always @(posedge txusrclk2) begin
+	if(ether_tx_state == 0) begin
+	    if(fifo_wr == 1 && send_sop == 1) begin
+		if(send_eop == 1) begin
+		    recv_packet <= 1;
+		    lbus_pkt_size_proc <= 64 - send_mty;
+		end else begin
+		    recv_packet <= 0;
+		    lbus_pkt_size_proc <= 64;
+		    ether_tx_state <= ether_tx_state + 1;
+		end
 	    end else begin
-	       recv_packet <= 1'b0;
-	       receiving_state <= 1'b1; // to continue to receive
+		recv_packet <= 0;
 	    end
-	 end else begin // if (rx_dataout0[15:0] == 16'h3434)
-	    fifo_wr <= 1'b0;
-	    receiving_state <= 1'b0;
-	 end
-      end else if(rx_enaout0 == 1'b1 && receiving_state == 1'b1) begin
-	 fifo_wr <= 1'b1;
-	 fifo_d <= {rx_dataout0, rx_dataout1, rx_dataout2, rx_dataout3};
-	 if(rx_enaout3 && rx_eopout3 == 1'b1) begin
-	    recv_packet_bytes <= recv_packet_bytes + (16 - rx_mtyout3) + 48;
-	    lbus_pkt_size_proc <= recv_packet_bytes + (16 - rx_mtyout3) + 48;
-	    recv_packet <= 1'b1;
-	    receiving_state <= 1'b0;
-	 end else if(rx_enaout2 && rx_eopout2 == 1'b1) begin
-	    recv_packet_bytes <= recv_packet_bytes + (16 - rx_mtyout2) + 32;
-	    lbus_pkt_size_proc <= recv_packet_bytes + (16 - rx_mtyout2) + 32;
-	    recv_packet <= 1'b1;
-	    receiving_state <= 1'b0;
-	 end else if(rx_enaout1 && rx_eopout1 == 1'b1) begin
-	    recv_packet_bytes <= recv_packet_bytes + (16 - rx_mtyout1) + 16;
-	    lbus_pkt_size_proc <= recv_packet_bytes + (16 - rx_mtyout1) + 16;
-	    recv_packet <= 1'b1;
-	    receiving_state <= 1'b0;
-	 end else if(rx_enaout0 && rx_eopout0 == 1'b1) begin
-	    recv_packet_bytes <= recv_packet_bytes + (16 - rx_mtyout0);
-	    lbus_pkt_size_proc <= recv_packet_bytes + (16 - rx_mtyout0);
-	    recv_packet <= 1'b1;
-	    receiving_state <= 1'b0;
-	 end else begin
-	    receiving_state <= 1'b1; // to continue to receive
-	    recv_packet <= 1'b0;
-	    recv_packet_bytes <= recv_packet_bytes + 14'd64;
-	 end
-      end else begin // if (rx_enaout0 == 1'b1 && receiving_state == 1'b1)
-	 fifo_wr <= 1'b0;
-      end
-      if(recv_packet == 1'b1) begin
-	 recv_packet <= 1'b0;
-      end
-   end
+	end else if(ether_tx_state == 1) begin
+	    if(fifo_wr == 1) begin
+		if(send_eop == 1) begin
+		    recv_packet <= 1;
+		    lbus_pkt_size_proc <= lbus_pkt_size_proc + (64 - send_mty);
+		    ether_tx_state <= 0;
+		end else begin
+		    recv_packet <= 0;
+		    lbus_pkt_size_proc <= lbus_pkt_size_proc + 64;
+		end
+	    end else begin
+		recv_packet <= 0;
+	    end
+	end else begin
+	    ether_tx_state <= 0;
+	end
+    end
 
    vio_0 vio_0_i(.clk(txusrclk2),
 		 .probe_in0(tx_done_led),
@@ -1120,13 +1148,13 @@ cmac_usplus_0_pkt_gen_mon
 		 );
 
    ila_1 ila_1_i(.clk(txusrclk2),
-		 .probe0({rx_enaout0, rx_eopout0, rx_sopout0, rx_dataout0}),
-		 .probe1({rx_enaout1, rx_eopout1, rx_sopout1, rx_dataout1}),
-		 .probe2({rx_enaout2, rx_eopout2, rx_sopout2, rx_dataout2}),
-		 .probe3({rx_enaout3, rx_eopout3, rx_sopout3, rx_dataout3}),
+		 .probe0({rx_mtyout0, rx_enaout0, rx_eopout0, rx_sopout0, rx_dataout0}),
+		 .probe1({rx_mtyout1, rx_enaout1, rx_eopout1, rx_sopout1, rx_dataout1}),
+		 .probe2({rx_mtyout2, rx_enaout2, rx_eopout2, rx_sopout2, rx_dataout2}),
+		 .probe3({rx_mtyout3, rx_enaout3, rx_eopout3, rx_sopout3, rx_dataout3}),
 		 .probe4({user_kick, user_kick_d1, user_kick_d2, user_kick_reg, user_state}),
 		 .probe5(debug),
-		 .probe6(recv_packet_bytes),
+		 .probe6({lbus_pkt_size_proc, ether_data_mty, send_mty}),
 		 .probe7(recv_packet),
 		 .probe8({fifo_rd, fifo_q}),
 		 .probe9({fifo_wr, fifo_d}),

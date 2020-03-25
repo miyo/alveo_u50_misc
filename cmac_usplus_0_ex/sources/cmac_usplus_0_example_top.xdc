@@ -50,8 +50,8 @@
 ### CMAC example design-level XDC file
 ### -----------------------------------------------------------------------------
 
-create_clock -period 10.000 [get_ports init_clk]
-set_property IOSTANDARD LVCMOS18 [get_ports init_clk]
+#create_clock -period 10.000 [get_ports init_clk]
+#set_property IOSTANDARD LVCMOS18 [get_ports init_clk]
 
 
 ### Transceiver Reference Clock Placement
