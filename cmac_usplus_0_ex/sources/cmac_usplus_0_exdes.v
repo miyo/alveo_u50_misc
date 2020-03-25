@@ -67,7 +67,6 @@ module cmac_usplus_0_exdes
 
   wire [11 :0]    gt_loopback_in;
 
-   wire 	  send_continuous_pkts;
    wire 	  lbus_tx_rx_restart_in;
    wire 	  tx_done_led;
    wire 	  tx_busy_led;
@@ -77,7 +76,7 @@ module cmac_usplus_0_exdes
    wire 	  rx_data_fail_led;
    wire 	  rx_busy_led;
    wire 	  stat_reg_compare_out;
-   reg 		  sys_reset = 1'b1;
+   wire		  sys_reset;
    wire 	  pm_tick;
    wire 	  init_clk;
 
@@ -376,7 +375,7 @@ module cmac_usplus_0_exdes
    wire [511:0]   payload;
    wire		  payload_rd;
    wire [15:0] 	  lbus_number_pkt_proc = 1'd1;
-   reg [13:0] 	  lbus_pkt_size_proc;
+   wire [13:0] 	  lbus_pkt_size_proc;
    wire [7:0] 	  debug;
 
 cmac_usplus_0 DUT
@@ -693,7 +692,7 @@ cmac_usplus_0_pkt_gen_mon
     .usr_tx_reset                         (usr_tx_reset),
     .usr_rx_reset                         (usr_rx_reset),
     .sys_reset                            (sys_reset),
-    .send_continuous_pkts                 (send_continuous_pkts),
+    .send_continuous_pkts                 (1'b0),
     .lbus_tx_rx_restart_in                (lbus_tx_rx_restart_in),
     .s_axi_aclk                           (init_clk),
     .s_axi_sreset                         (sys_reset),
@@ -973,84 +972,35 @@ cmac_usplus_0_pkt_gen_mon
 	counter <= counter + 1;
     end
 
-    //resetgen#(.RESET_COUNT(100)) resetgen_i(clk(init_clk), .reset_in(1'b0), .reset_out(sys_reset));
-   always @(posedge init_clk) begin
-      if(reset_counter == 100) begin
-	 sys_reset <= 1'b0;
-      end else begin
-	 sys_reset <= 1'b1;
-	 reset_counter <= reset_counter + 1;
-      end
-   end
-   
-   wire user_kick;
-   reg user_kick_reg = 1'b0;
-   reg user_kick_d1 = 1'b0;
-   reg user_kick_d2 = 1'b0;
-   reg[3:0] user_state = 4'd0;
+    resetgen#(.RESET_COUNT(100)) resetgen_i(.clk(init_clk), .reset_in(1'b0), .reset_out(sys_reset));
 
-   reg 	    recv_packet;
-   
-   always @(posedge txusrclk2) begin
-      user_kick_d1 <= user_kick || recv_packet;
-      user_kick_d2 <= user_kick_d1;
-      case(user_state)
-	0 : begin
-	   if(user_kick_d2 == 1'b0 && user_kick_d1 == 1'b1) begin
-	      user_kick_reg <= 1'b1;
-	      user_state <= user_state + 1;
-	   end else begin
-	      user_kick_reg <= 1'b0;
-	   end
-	end
-	1 : begin
-	   if(tx_busy_led == 1'b1) begin // TX begin
-	      user_kick_reg <= 1'b0;
-	      user_state <= user_state + 1;
-	   end
-	end
-	2 : begin
-	   if(tx_done_led == 1'b1) begin // TX done
-	      user_state <= 0;
-	   end
-	end
-	default: begin
-	   user_state <= 0;
-	   user_kick_reg <= 1'b0;
-	end
-      endcase // case (user_state)
-   end // always @ (posedge init_clk)
-
-   assign send_continuous_pkts  = 1'b0;
-   assign lbus_tx_rx_restart_in = user_kick_reg;
-
-   wire [511:0] fifo_d;
-   wire [511:0] fifo_q;
-   wire 	fifo_wr;
-   wire 	fifo_rd;
-   wire 	fifo_full, fifo_empty;
-   
-   fifo_512_256_ft fifo_512_256_ft_i(.wr_clk(txusrclk2),
-				     .rd_clk(txusrclk2),
-				     .rst(sys_reset), // async
-				     .din(fifo_d),
-				     .wr_en(fifo_wr),
-				     .full(fifo_full),
-				     .dout(fifo_q),
-				     .empty(fifo_empty),
-				     .rd_en(fifo_rd),
-				     .wr_rst_busy(),
-				     .rd_rst_busy()
-				     );
+    wire [511:0] fifo_d;
+    wire [511:0] fifo_q;
+    wire 	fifo_wr;
+    wire 	fifo_rd;
+    wire 	fifo_full, fifo_empty;
+    
+    fifo_512_256_ft fifo_512_256_ft_i(.wr_clk(txusrclk2),
+				      .rd_clk(txusrclk2),
+				      .rst(sys_reset), // async
+				      .din(fifo_d),
+				      .wr_en(fifo_wr),
+				      .full(fifo_full),
+				      .dout(fifo_q),
+				      .empty(fifo_empty),
+				      .rd_en(fifo_rd),
+				      .wr_rst_busy(),
+				      .rd_rst_busy()
+				      );
     assign payload = fifo_q;
     assign fifo_rd = payload_rd;
 
     wire [7:0] recv_mty = rx_eopout3 == 1'b1 ? rx_mtyout3
-	                : rx_eopout2 == 1'b1 ? rx_mtyout2 + 8'd16
-	                : rx_eopout1 == 1'b1 ? rx_mtyout1 + 8'd32
-	                : rx_eopout0 == 1'b1 ? rx_mtyout0 + 8'd48
-                        : 8'd0;
-	       
+	       : rx_eopout2 == 1'b1 ? rx_mtyout2 + 8'd16
+	       : rx_eopout1 == 1'b1 ? rx_mtyout1 + 8'd32
+	       : rx_eopout0 == 1'b1 ? rx_mtyout0 + 8'd48
+               : 8'd0;
+    
     wire [111:0] ether_header_data;
     wire         ether_header_valid;
     wire [511:0] ether_data_data;
@@ -1059,107 +1009,92 @@ cmac_usplus_0_pkt_gen_mon
     wire         ether_data_eop;
     wire [7:0]   ether_data_mty;
     ether_rx#(.APP_KEY(16'h3434)) ether_rx_i
-    (
-     .clk(txusrclk2),
-     .reset(1'b0),
-     .recv_data({rx_dataout0, rx_dataout1, rx_dataout2, rx_dataout3}),
-     .recv_valid(rx_enaout0),
-     .recv_sop(rx_sopout0),
-     .recv_eop(rx_eopout0 || rx_eopout1 || rx_eopout2 || rx_eopout3),
-     .recv_mty(recv_mty),
-     .ether_header_data(ether_header_data),
-     .ether_header_valid(ether_header_valid),
-     .ether_data_data(ether_data_data),
-     .ether_data_valid(ether_data_valid),
-     .ether_data_sop(ether_data_sop),
-     .ether_data_eop(ether_data_eop),
-     .ether_data_mty(ether_data_mty)
-     );
+      (
+       .clk(txusrclk2),
+       .reset(1'b0),
+       .recv_data({rx_dataout0, rx_dataout1, rx_dataout2, rx_dataout3}),
+       .recv_valid(rx_enaout0),
+       .recv_sop(rx_sopout0),
+       .recv_eop(rx_eopout0 || rx_eopout1 || rx_eopout2 || rx_eopout3),
+       .recv_mty(recv_mty),
+       .ether_header_data(ether_header_data),
+       .ether_header_valid(ether_header_valid),
+       .ether_data_data(ether_data_data),
+       .ether_data_valid(ether_data_valid),
+       .ether_data_sop(ether_data_sop),
+       .ether_data_eop(ether_data_eop),
+       .ether_data_mty(ether_data_mty)
+       );
 
-    wire send_sop, send_eop;
+    wire send_valid, send_sop, send_eop;
     wire [7:0] send_mty;
+    wire [511:0] send_data;
 
     ether_tx ether_tx_i
-    (
-     .clk(txusrclk2),
-     .reset(1'b0),
-     .ether_header_data(ether_header_data),
-     .ether_header_valid(ether_header_valid),
-     .ether_data_data(ether_data_data),
-     .ether_data_valid(ether_data_valid),
-     .ether_data_sop(ether_data_sop),
-     .ether_data_eop(ether_data_eop),
-     .ether_data_mty(ether_data_mty),
-     .send_data(fifo_d),
-     .send_valid(fifo_wr),
-     .send_sop(send_sop),
-     .send_eop(send_eop),
-     .send_mty(send_mty)
-     );
+      (
+       .clk(txusrclk2),
+       .reset(1'b0),
+       .ether_header_data({ether_header_data[63:16], ether_header_data[111:64], ether_header_data[15:0]}), // loopback
+       .ether_header_valid(ether_header_valid),
+       .ether_data_data(ether_data_data),
+       .ether_data_valid(ether_data_valid),
+       .ether_data_sop(ether_data_sop),
+       .ether_data_eop(ether_data_eop),
+       .ether_data_mty(ether_data_mty),
+       .send_data(send_data),
+       .send_valid(send_valid),
+       .send_sop(send_sop),
+       .send_eop(send_eop),
+       .send_mty(send_mty)
+       );
 
-    reg[7:0] ether_tx_state;
-    always @(posedge txusrclk2) begin
-	if(ether_tx_state == 0) begin
-	    if(fifo_wr == 1 && send_sop == 1) begin
-		if(send_eop == 1) begin
-		    recv_packet <= 1;
-		    lbus_pkt_size_proc <= 64 - send_mty;
-		end else begin
-		    recv_packet <= 0;
-		    lbus_pkt_size_proc <= 64;
-		    ether_tx_state <= ether_tx_state + 1;
-		end
-	    end else begin
-		recv_packet <= 0;
-	    end
-	end else if(ether_tx_state == 1) begin
-	    if(fifo_wr == 1) begin
-		if(send_eop == 1) begin
-		    recv_packet <= 1;
-		    lbus_pkt_size_proc <= lbus_pkt_size_proc + (64 - send_mty);
-		    ether_tx_state <= 0;
-		end else begin
-		    recv_packet <= 0;
-		    lbus_pkt_size_proc <= lbus_pkt_size_proc + 64;
-		end
-	    end else begin
-		recv_packet <= 0;
-	    end
-	end else begin
-	    ether_tx_state <= 0;
-	end
-    end
+    cmac_usplus_emitter cmac_usplus_emitter_i
+      (
+       .clk(txusrclk2),
+       .reset(1'b0),
 
-   vio_0 vio_0_i(.clk(txusrclk2),
-		 .probe_in0(tx_done_led),
-		 .probe_in1(tx_busy_led),
-		 .probe_in2(rx_gt_locked_led),
-		 .probe_in3(rx_aligned_led),
-		 .probe_in4(rx_done_led),
-		 .probe_in5(rx_data_fail_led),
-		 .probe_in6(rx_busy_led),
-		 .probe_in7(stat_reg_compare_out),
-		 .probe_out0(user_kick),
-		 .probe_out1(pm_tick)
-		 );
-   
-   ila_0 ila_0_i(.clk(init_clk),
-		 .probe0(counter)
-		 );
+       .din_data(send_data),
+       .din_valid(send_valid),
+       .din_sop(send_sop),
+       .din_eop(send_eop),
+       .din_mty(send_mty),
 
-   ila_1 ila_1_i(.clk(txusrclk2),
-		 .probe0({rx_mtyout0, rx_enaout0, rx_eopout0, rx_sopout0, rx_dataout0}),
-		 .probe1({rx_mtyout1, rx_enaout1, rx_eopout1, rx_sopout1, rx_dataout1}),
-		 .probe2({rx_mtyout2, rx_enaout2, rx_eopout2, rx_sopout2, rx_dataout2}),
-		 .probe3({rx_mtyout3, rx_enaout3, rx_eopout3, rx_sopout3, rx_dataout3}),
-		 .probe4({user_kick, user_kick_d1, user_kick_d2, user_kick_reg, user_state}),
-		 .probe5(debug),
-		 .probe6({lbus_pkt_size_proc, ether_data_mty, send_mty}),
-		 .probe7(recv_packet),
-		 .probe8({fifo_rd, fifo_q}),
-		 .probe9({fifo_wr, fifo_d}),
-		 .probe10(tx_rdyout)
-		 );
+       .dout_data(fifo_d),
+       .dout_valid(fifo_wr),
+       .dout_kick(lbus_tx_rx_restart_in),
+       .dout_bytes(lbus_pkt_size_proc),
+       .cmac_busy(tx_busy_led),
+       .cmac_done(tx_done_led)
+       );
+
+    vio_0 vio_0_i(.clk(txusrclk2),
+		  .probe_in0(tx_done_led),
+		  .probe_in1(tx_busy_led),
+		  .probe_in2(rx_gt_locked_led),
+		  .probe_in3(rx_aligned_led),
+		  .probe_in4(rx_done_led),
+		  .probe_in5(rx_data_fail_led),
+		  .probe_in6(rx_busy_led),
+		  .probe_in7(stat_reg_compare_out),
+		  .probe_out0(pm_tick)
+		  );
+    
+    ila_0 ila_0_i(.clk(init_clk),
+		  .probe0(counter)
+		  );
+
+    ila_1 ila_1_i(.clk(txusrclk2),
+		  .probe0({rx_mtyout0, rx_enaout0, rx_eopout0, rx_sopout0, rx_dataout0}),
+		  .probe1({rx_mtyout1, rx_enaout1, rx_eopout1, rx_sopout1, rx_dataout1}),
+		  .probe2({rx_mtyout2, rx_enaout2, rx_eopout2, rx_sopout2, rx_dataout2}),
+		  .probe3({rx_mtyout3, rx_enaout3, rx_eopout3, rx_sopout3, rx_dataout3}),
+		  .probe4(debug),
+		  .probe5({lbus_pkt_size_proc, ether_data_mty, send_mty}),
+		  .probe6(lbus_tx_rx_restart_in),
+		  .probe7({fifo_rd, fifo_q}),
+		  .probe8({fifo_wr, fifo_d}),
+		  .probe9(tx_rdyout)
+		  );
 
 endmodule // cmac_usplus_0_exdes
 

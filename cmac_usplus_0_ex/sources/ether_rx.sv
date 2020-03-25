@@ -16,7 +16,7 @@ module ether_rx(
   local ether_data_sop_reg bit
   
   idle(recv.sop == 1 && recv.valid == 1 && recv.data[415:400] == APP_KEY){
-    ether_header.data <= {recv.data[463:416], recv.data[511:464], recv.data[415:400]};
+    ether_header.data <= recv.data[511:400];
     ether_header.valid <= 1;
     if(recv.eop == 1){
       ether_data.data <= {recv.data[399:0], 112'd0};
@@ -117,7 +117,7 @@ output reg [7:0] ether_data_mty
 	case(state)
 	    IDLE: begin
 		if(recv_sop == 1'b1 && recv_valid == 1'b1 && recv_data[415:400] == APP_KEY) begin
-		    ether_header_data <= {recv_data[463:416], recv_data[511:464], recv_data[415:400]};
+		    ether_header_data <= recv_data[511:400];
 		    ether_header_valid <= 1'b1;
 		    if(recv_eop == 1'b1) begin
 			ether_data_data <= {recv_data[399:0], 112'd0};
