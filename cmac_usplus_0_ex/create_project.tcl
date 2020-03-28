@@ -10,6 +10,10 @@ set source_files { \
 			./sources/cmac_usplus_0_lbus_pkt_gen.v \
 			./sources/cmac_usplus_0_lbus_pkt_mon.v \
 			./sources/cmac_usplus_0_pkt_gen_mon.v \
+			./sources/resetgen.v \
+			./sources/cmac_usplus_emitter.sv \
+			./sources/ether_rx.sv \
+			./sources/ether_tx.sv \
 		   }
 
 set constraint_files { \
@@ -28,6 +32,7 @@ add_files -fileset constrs_1 -norecurse $constraint_files
 update_ip_catalog
 
 import_ip -files ./ip/cmac_usplus_0.xci
+import_ip -files ./ip/fifo_512_256_ft.xci
 import_ip -files ./ip/ila_0.xci
 import_ip -files ./ip/ila_1.xci
 import_ip -files ./ip/vio_0.xci
