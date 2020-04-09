@@ -805,7 +805,7 @@ module cmac_usplus_0_lbus_pkt_gen
                                              payload_rd <= 1'b0;
                                          end else if ((tx_rdyout_d == 1'b1) && (tx_ovfout_d == 1'b0) && (tx_unfout_d == 1'b0)) begin
                                              tx_prestate <= STATE_LBUS_TX_ENABLE;
-					     if (pending_pkt_size > 14'd64) begin
+					     if (pending_pkt_size > 14'd0) begin
                                                  payload_rd <= 1'b1;
                                              end else begin
                                                  payload_rd <= 1'b0;

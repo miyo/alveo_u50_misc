@@ -16,7 +16,8 @@ module cmac_usplus_emitter
    output wire dout_kick,
    output wire [13:0] dout_bytes,
    input wire cmac_busy,
-   input wire cmac_done
+   input wire cmac_done,
+   input wire cmac_tx_rdy
    );
 
     reg[7:0] data_ready_state = 8'd0;
@@ -99,7 +100,7 @@ module cmac_usplus_emitter
 	end else begin
 	    case(kick_state)
 		0 : begin
-		    if(fifo_valid) begin
+		    if(fifo_valid && cmac_tx_rdy) begin
 			kick_reg <= 1'b1;
 			kick_state <= kick_state + 1;
 			bytes_reg <= fifo_q[13:0];

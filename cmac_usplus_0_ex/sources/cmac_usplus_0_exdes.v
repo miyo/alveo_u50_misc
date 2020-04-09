@@ -964,6 +964,10 @@ cmac_usplus_0_pkt_gen_mon
     .debug(debug)
 );
 
+    reg[7:0] debug_d;
+    always @(posedge txusrclk2)
+      debug_d <= debug;
+
     assign init_clk = gt_ref_clk_out;
     
     reg [31:0] 	  counter = 32'd0;
@@ -1064,7 +1068,8 @@ cmac_usplus_0_pkt_gen_mon
        .dout_kick(lbus_tx_rx_restart_in),
        .dout_bytes(lbus_pkt_size_proc),
        .cmac_busy(tx_busy_led),
-       .cmac_done(tx_done_led)
+       .cmac_done(tx_done_led),
+       .cmac_tx_rdy(tx_rdyout)
        );
 
     vio_0 vio_0_i(.clk(txusrclk2),
@@ -1088,7 +1093,7 @@ cmac_usplus_0_pkt_gen_mon
 		  .probe1({rx_mtyout1, rx_enaout1, rx_eopout1, rx_sopout1, rx_dataout1}),
 		  .probe2({rx_mtyout2, rx_enaout2, rx_eopout2, rx_sopout2, rx_dataout2}),
 		  .probe3({rx_mtyout3, rx_enaout3, rx_eopout3, rx_sopout3, rx_dataout3}),
-		  .probe4(debug),
+		  .probe4({debug_d, debug}),
 		  .probe5({lbus_pkt_size_proc, ether_data_mty, send_mty}),
 		  .probe6(lbus_tx_rx_restart_in),
 		  .probe7({fifo_rd, fifo_q}),
