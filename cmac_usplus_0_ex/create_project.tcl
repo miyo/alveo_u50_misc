@@ -33,6 +33,7 @@ update_ip_catalog
 
 import_ip -files ./ip/cmac_usplus_0.xci
 import_ip -files ./ip/fifo_512_256_ft.xci
+import_ip -files ./ip/fifo_16_1024_ft.xci
 import_ip -files ./ip/ila_0.xci
 import_ip -files ./ip/ila_1.xci
 import_ip -files ./ip/vio_0.xci
