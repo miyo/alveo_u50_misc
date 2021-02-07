@@ -12,7 +12,7 @@ def main()
   vivado.set_target("xcu50-fsvh2104-2-e")
   vivado.set_board("xilinx.com:au50:part0:1.0")
 
-  vivado.add_sources(["sources/aurora_test_au50.sv"])
+  vivado.add_sources(["sources/aurora_test_au50_top.sv"])
   vivado.add_constraints(["sources/aurora_test_au50_top.xdc"])
   vivado.add_testbenchs([])
   vivado.add_ipcores(["ipcores/clk_wiz_0.xci",
